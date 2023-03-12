@@ -54,6 +54,8 @@ pub enum Key {
     RuleSet,
     /// An account containing frequency state.
     Frequency,
+    /// An account containing a RuleSetV2.
+    RuleSetV2,
 }
 
 /// A trait implementing generic functions required by all accounts on Solana.

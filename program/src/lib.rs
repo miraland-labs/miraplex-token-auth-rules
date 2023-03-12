@@ -1,3 +1,4 @@
+pub mod bytemuck;
 #[deny(missing_docs)]
 pub mod entrypoint;
 #[deny(missing_docs)]

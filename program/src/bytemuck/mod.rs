@@ -1,0 +1,143 @@
+mod account;
+mod all;
+mod amount;
+mod any;
+mod program_owned_list;
+mod rule;
+mod rule_set;
+
+use std::{collections::HashMap, fmt::Display};
+
+pub use account::*;
+pub use all::*;
+pub use amount::*;
+pub use any::*;
+pub use program_owned_list::*;
+pub use rule::*;
+pub use rule_set::*;
+use solana_program::{
+    account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
+    pubkey::Pubkey,
+};
+
+use crate::{error::RuleSetError, payload::Payload, state::RuleResult};
+
+// max size 16 bytes
+pub const FIELD_LENGTH: usize = 32;
+
+pub trait Assertable<'a>: Display {
+    fn validate(
+        &self,
+        accounts: &HashMap<Pubkey, &AccountInfo>,
+        payload: &Payload,
+        update_rule_state: bool,
+        rule_set_state_pda: &Option<&AccountInfo>,
+        rule_authority: &Option<&AccountInfo>,
+    ) -> ProgramResult {
+        let result = self.inner_validate(
+            accounts,
+            payload,
+            update_rule_state,
+            rule_set_state_pda,
+            rule_authority,
+        );
+
+        match result {
+            RuleResult::Success(_) => Ok(()),
+            RuleResult::Failure(err) => Err(err),
+            RuleResult::Error(err) => Err(err),
+        }
+    }
+
+    fn inner_validate(
+        &self,
+        _accounts: &HashMap<Pubkey, &AccountInfo>,
+        _payload: &Payload,
+        _update_rule_state: bool,
+        _rule_set_state_pda: &Option<&AccountInfo>,
+        _rule_authority: &Option<&AccountInfo>,
+    ) -> RuleResult {
+        RuleResult::Success(self.assert_type().to_error())
+    }
+
+    fn assert_type(&self) -> AssertType;
+}
+
+#[repr(u64)]
+#[derive(PartialEq, Eq, Debug, Clone)]
+/// Operators that can be used to compare against an `Amount` rule.
+pub enum CompareOp {
+    /// Less Than
+    Lt,
+    /// Less Than or Equal To
+    LtEq,
+    /// Equal To
+    Eq,
+    /// Greater Than or Equal To
+    GtEq,
+    /// Greater Than
+    Gt,
+}
+
+impl TryFrom<u64> for CompareOp {
+    // Type of the error generated.
+    type Error = RuleSetError;
+
+    fn try_from(value: u64) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(CompareOp::Lt),
+            1 => Ok(CompareOp::LtEq),
+            2 => Ok(CompareOp::Eq),
+            3 => Ok(CompareOp::GtEq),
+            4 => Ok(CompareOp::Gt),
+            value => {
+                panic!("invalid operator: {}", value)
+            }
+        }
+    }
+}
+
+#[repr(u32)]
+#[derive(Clone, Copy)]
+/// The struct containing every type of Rule and its associated data.
+pub enum AssertType {
+    /// Group AND, where every rule contained must pass.
+    All,
+    /// Group OR, where at least one rule contained must pass.
+    Any,
+    /// Negation, where the contained rule must fail.
+    ProgramOwnedList,
+    /// Comparison against the amount of tokens being transferred.   When the `Validate`
+    /// instruction is called, this rule requires a `PayloadType` value of `PayloadType::Amount`.
+    /// The `field` value in the Rule is used to locate the numerical amount in the payload to
+    /// compare to the amount stored in the rule, using the comparison operator stored in the rule.
+    Amount,
+}
+
+impl AssertType {
+    /// Convert the rule to a corresponding error resulting from the rule failure.
+    pub fn to_error(&self) -> ProgramError {
+        match self {
+            AssertType::All | AssertType::Any => RuleSetError::UnexpectedRuleSetFailure.into(),
+            AssertType::ProgramOwnedList => RuleSetError::ProgramOwnedListCheckFailed.into(),
+            AssertType::Amount => RuleSetError::AmountCheckFailed.into(),
+        }
+    }
+}
+
+impl TryFrom<u32> for AssertType {
+    // Type of the error generated.
+    type Error = RuleSetError;
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(AssertType::All),
+            1 => Ok(AssertType::Any),
+            2 => Ok(AssertType::ProgramOwnedList),
+            3 => Ok(AssertType::Amount),
+            value => {
+                panic!("invalid rule type: {}", value)
+            }
+        }
+    }
+}

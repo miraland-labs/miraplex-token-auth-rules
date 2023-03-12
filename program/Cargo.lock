@@ -1825,8 +1825,10 @@ dependencies = [
 name = "mpl-token-auth-rules"
 version = "1.2.0"
 dependencies = [
+ "arrayref",
  "assert_matches",
  "borsh",
+ "bytemuck",
  "mpl-token-metadata-context-derive",
  "num-derive",
  "num-traits",

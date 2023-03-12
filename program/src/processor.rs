@@ -2,6 +2,10 @@
 use std::collections::HashMap;
 
 use crate::{
+    bytemuck::{
+        AccountHeader, AccountRevisionMap, RuleSetV2, ACCOUNT_HEADER_LENGTH,
+        MINIMUM_REVISION_MAP_LENGTH,
+    },
     error::RuleSetError,
     instruction::{
         Context, CreateOrUpdate, CreateOrUpdateArgs, PuffRuleSet, PuffRuleSetArgs,
@@ -9,7 +13,7 @@ use crate::{
     },
     pda::{PREFIX, STATE_PDA},
     state::{
-        RuleSetHeader, RuleSetRevisionMapV1, RuleSetV1, CHUNK_SIZE, RULE_SET_LIB_VERSION,
+        Key, RuleSetHeader, RuleSetRevisionMapV1, RuleSetV1, CHUNK_SIZE, RULE_SET_LIB_VERSION,
         RULE_SET_REV_MAP_VERSION, RULE_SET_SERIALIZED_HEADER_LEN,
     },
     utils::{
@@ -22,6 +26,7 @@ use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     account_info::AccountInfo,
     entrypoint::ProgramResult,
+    log::sol_log_compute_units,
     msg,
     program_error::ProgramError,
     program_memory::{sol_memcmp, sol_memcpy},
@@ -69,6 +74,7 @@ fn create_or_update<'a>(
 
     match args {
         CreateOrUpdateArgs::V1 { .. } => create_or_update_v1(program_id, context, args),
+        CreateOrUpdateArgs::V2 { .. } => create_or_update_v2(program_id, context, args),
     }
 }
 
@@ -79,9 +85,14 @@ fn create_or_update_v1(
     args: CreateOrUpdateArgs,
 ) -> ProgramResult {
     // Get the V1 arguments for the instruction.
-    let CreateOrUpdateArgs::V1 {
+    let serialized_rule_set = if let CreateOrUpdateArgs::V1 {
         serialized_rule_set,
-    } = args;
+    } = args
+    {
+        serialized_rule_set
+    } else {
+        unimplemented!("invalid args version");
+    };
 
     if !ctx.accounts.payer_info.is_signer {
         return Err(RuleSetError::PayerIsNotSigner.into());
@@ -89,7 +100,7 @@ fn create_or_update_v1(
 
     // Deserialize `RuleSet`.
     let rule_set = match ctx.accounts.buffer_pda_info {
-        Some(account_info) => rmp_serde::from_slice::<RuleSetV1>(&account_info.data.borrow())
+        Some(account_info) => rmp_serde::from_slice::<RuleSetV1>(&(*account_info.data).borrow())
             .map_err(|_| RuleSetError::MessagePackDeserializationError)?,
         None => rmp_serde::from_slice(&serialized_rule_set)
             .map_err(|_| RuleSetError::MessagePackDeserializationError)?,
@@ -129,7 +140,7 @@ fn create_or_update_v1(
 
     // Get new or existing revision map.
     let revision_map = if ctx.accounts.rule_set_pda_info.data_is_empty()
-        || is_zeroed(&ctx.accounts.rule_set_pda_info.data.borrow())
+        || is_zeroed(&(*ctx.accounts.rule_set_pda_info.data).borrow())
     {
         let mut revision_map = RuleSetRevisionMapV1::default();
 
@@ -160,6 +171,8 @@ fn create_or_update_v1(
         Some(account_info) => account_info.data_len(),
         None => serialized_rule_set.len(),
     };
+
+    msg!("Writing {} bytes", new_rule_set_data_len);
 
     // Determine size needed for PDA: next revision location (which is:
     // (RULE_SET_SERIALIZED_HEADER_LEN || existing latest revision map location)) +
@@ -204,7 +217,7 @@ fn create_or_update_v1(
                     .last()
                     .ok_or(RuleSetError::RuleSetRevisionNotAvailable)?,
                 &serialized_rev_map,
-                &account_info.data.borrow(),
+                &(*account_info.data).borrow(),
             )?;
         }
         None => {
@@ -219,6 +232,173 @@ fn create_or_update_v1(
             )?;
         }
     };
+
+    Ok(())
+}
+
+/// V1 implementation of the `create` instruction.
+fn create_or_update_v2(
+    program_id: &Pubkey,
+    ctx: Context<CreateOrUpdate>,
+    args: CreateOrUpdateArgs,
+) -> ProgramResult {
+    // Get the V1 arguments for the instruction.
+    let serialized_rule_set = if let CreateOrUpdateArgs::V2 {
+        serialized_rule_set,
+    } = args
+    {
+        serialized_rule_set
+    } else {
+        unimplemented!("invalid args version");
+    };
+
+    if !ctx.accounts.payer_info.is_signer {
+        return Err(RuleSetError::PayerIsNotSigner.into());
+    }
+
+    // bytemuck Deserialize `RuleSet`.
+    let (rule_set_version, rule_set_name) = match ctx.accounts.buffer_pda_info {
+        Some(account_info) => {
+            let data = &(*account_info.data).borrow();
+            let rule_set = RuleSetV2::from_bytes(data)
+                .map_err(|_| RuleSetError::MessagePackDeserializationError)?;
+            (*rule_set.lib_version, rule_set.rule_set_name.to_string())
+        }
+        None => {
+            let rule_set = RuleSetV2::from_bytes(&serialized_rule_set)
+                .map_err(|_| RuleSetError::MessagePackDeserializationError)?;
+            (*rule_set.lib_version, rule_set.rule_set_name.to_string())
+        }
+    };
+
+    let rule_set_name = rule_set_name.trim_end_matches('\0').to_string();
+
+    /* NOTE: the name cannot be longer the max length
+    if rule_set.name().len() > MAX_NAME_LENGTH {
+        return Err(RuleSetError::NameTooLong.into());
+    }
+    */
+
+    // Make sure we know how to work with this RuleSet.
+    if rule_set_version != crate::bytemuck::RULE_SET_LIB_VERSION as u64 {
+        return Err(RuleSetError::UnsupportedRuleSetVersion.into());
+    }
+    /* TODO: create a helper function to validate the rule set
+    // The payer/signer must be the `RuleSet` owner.
+    if ctx.accounts.payer_info.key != rule_set.owner {
+        return Err(RuleSetError::RuleSetOwnerMismatch.into());
+    }
+    */
+
+    let mut rule_set_seeds = vec![
+        PREFIX.as_ref(),
+        ctx.accounts.payer_info.key.as_ref(),
+        rule_set_name.as_bytes(),
+    ];
+
+    // Check `RuleSet` account info derivation.
+    let bump = assert_derivation(
+        program_id,
+        ctx.accounts.rule_set_pda_info.key,
+        &rule_set_seeds,
+    )?;
+    let bump_seed = [bump];
+    rule_set_seeds.push(&bump_seed);
+
+    // Get new user-pre-serialized `RuleSet` data length based on whether it's in a buffer account
+    // or provided as an argument.
+    let new_rule_set_data_len = match ctx.accounts.buffer_pda_info {
+        Some(account_info) => account_info.data_len(),
+        None => serialized_rule_set.len(),
+    };
+
+    let account_size = ctx.accounts.rule_set_pda_info.data_len();
+
+    // Create or allocate, resize or reallocate the `RuleSet` PDA.
+    if account_size == 0 {
+        msg!("Calculating required account size");
+        let required_length = (ACCOUNT_HEADER_LENGTH + MINIMUM_REVISION_MAP_LENGTH)
+            .checked_add(new_rule_set_data_len)
+            .ok_or(RuleSetError::NumericalOverflow)?;
+
+        msg!("Initializing account");
+        create_or_allocate_account_raw(
+            *program_id,
+            ctx.accounts.rule_set_pda_info,
+            ctx.accounts.system_program_info,
+            ctx.accounts.payer_info,
+            required_length,
+            &rule_set_seeds,
+        )?;
+    } else {
+        let account_data = (*ctx.accounts.rule_set_pda_info.data).borrow();
+
+        msg!("Calculating required account size (resize if needed)");
+        let required_length = if is_zeroed(&account_data) {
+            (ACCOUNT_HEADER_LENGTH + MINIMUM_REVISION_MAP_LENGTH)
+                .checked_add(new_rule_set_data_len)
+                .ok_or(RuleSetError::NumericalOverflow)?
+        } else {
+            (account_size + MINIMUM_REVISION_MAP_LENGTH)
+                .checked_add(new_rule_set_data_len)
+                .ok_or(RuleSetError::NumericalOverflow)?
+        };
+
+        drop(account_data);
+
+        if required_length > account_size {
+            msg!("Resizing account");
+            resize_or_reallocate_account_raw(
+                ctx.accounts.rule_set_pda_info,
+                ctx.accounts.payer_info,
+                ctx.accounts.system_program_info,
+                required_length,
+            )?;
+        }
+    }
+
+    msg!("Writing {} bytes", new_rule_set_data_len);
+
+    // Determine the offset for the 'RuleSet'
+    let start = ACCOUNT_HEADER_LENGTH;
+    let end = start
+        .checked_add(new_rule_set_data_len)
+        .ok_or(RuleSetError::NumericalOverflow)?;
+
+    let account_data = &mut (*ctx.accounts.rule_set_pda_info.data).borrow_mut();
+    let header =
+        bytemuck::from_bytes_mut::<AccountHeader>(&mut account_data[..ACCOUNT_HEADER_LENGTH]);
+
+    // initialize the header values
+    header.set_key(Key::RuleSetV2 as u32);
+    header.set_map_location(end as u32);
+
+    // Copies the 'RuleSet' data
+    if end <= account_data.len() {
+        match ctx.accounts.buffer_pda_info {
+            Some(account_info) => sol_memcpy(
+                &mut account_data[start..end],
+                &(*account_info.data).borrow(),
+                serialized_rule_set.len(),
+            ),
+            None => sol_memcpy(
+                &mut account_data[start..end],
+                &serialized_rule_set,
+                serialized_rule_set.len(),
+            ),
+        }
+    } else {
+        return Err(RuleSetError::DataSliceUnexpectedIndexError.into());
+    }
+
+    // Updates the revison map
+    let revision_map = AccountRevisionMap::from_bytes_mut(
+        &mut account_data[end..end + MINIMUM_REVISION_MAP_LENGTH],
+    );
+
+    *revision_map.size = 1u64;
+    revision_map.revisions[0].set_offset(ACCOUNT_HEADER_LENGTH as u32);
+    revision_map.revisions[0].set_length(serialized_rule_set.len() as u32);
 
     Ok(())
 }
@@ -307,6 +487,8 @@ fn validate_v1(program_id: &Pubkey, ctx: Context<Validate>, args: ValidateArgs) 
         .try_borrow()
         .map_err(|_| ProgramError::AccountBorrowFailed)?;
 
+    msg!("------ BEFORE");
+    sol_log_compute_units();
     // Check `RuleSet` lib version.
     let rule_set = match data.get(start) {
         Some(&RULE_SET_LIB_VERSION) => {
@@ -326,6 +508,8 @@ fn validate_v1(program_id: &Pubkey, ctx: Context<Validate>, args: ValidateArgs) 
         Some(_) => return Err(RuleSetError::UnsupportedRuleSetVersion.into()),
         None => return Err(RuleSetError::DataTypeMismatch.into()),
     };
+    sol_log_compute_units();
+    msg!("------ AFTER");
 
     // Check `RuleSet` account info derivation.
     let _bump = assert_derivation(
