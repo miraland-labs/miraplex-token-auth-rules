@@ -2,9 +2,13 @@
 
 pub mod utils;
 
+use std::borrow::BorrowMut;
+
 use arrayref::array_ref;
 use mpl_token_auth_rules::{
-    bytemuck::{All, Amount, ProgramOwnedList, RuleSetV2},
+    bytemuck::{
+        AccountRevisionMap, All, Amount, ProgramOwnedList, RuleSetV2, ACCOUNT_HEADER_LENGTH,
+    },
     instruction::{builders::ValidateBuilder, InstructionBuilder, ValidateArgs},
     payload::{Payload, PayloadType},
     state::{CompareOp, Key, Rule, RuleSetV1},
@@ -344,7 +348,7 @@ async fn create_rule_set_v2() {
     let mut context = program_test().start_with_context().await;
     let rule_set_addr = create_royalty_rule_set_v2(&mut context).await;
 
-    let rule_set_account = context
+    let mut rule_set_account = context
         .banks_client
         .get_account_with_commitment(rule_set_addr, CommitmentLevel::Processed)
         .await
@@ -353,6 +357,23 @@ async fn create_rule_set_v2() {
 
     let key = u32::from_le_bytes(*array_ref![rule_set_account.data, 0, 4]);
     assert_eq!(key, Key::RuleSetV2 as u32);
+
+    // check that the rule list is present in the account
+
+    let data: &mut [u8] = rule_set_account.data.borrow_mut();
+    // location of the revision map
+    let location = u32::from_le_bytes(*array_ref![data, 4, 4]) as usize;
+    let revision_map = AccountRevisionMap::from_bytes_mut(&mut data[location..]);
+
+    // offset of the rule set
+    let offset = revision_map.revisions[(*revision_map.size - 1) as usize].offset();
+    assert_eq!(offset, ACCOUNT_HEADER_LENGTH);
+
+    let rule_set = RuleSetV2::from_bytes(&data[offset..]).unwrap();
+    assert_eq!(rule_set.operations.len(), 3);
+    assert_eq!(rule_set.rules.len(), 3);
+
+    println!("\nAfter \"deserialization\":\n{}", rule_set);
 }
 
 #[tokio::test]

@@ -382,7 +382,6 @@ fn create_or_update_v2(
         .ok_or(RuleSetError::NumericalOverflow)?;
 
     let account_data = &mut (*ctx.accounts.rule_set_pda_info.data).borrow_mut();
-    msg!("Writing {} bytes", account_data.len());
 
     let header =
         bytemuck::from_bytes_mut::<AccountHeader>(&mut account_data[..ACCOUNT_HEADER_LENGTH]);
@@ -391,18 +390,20 @@ fn create_or_update_v2(
     header.set_key(Key::RuleSetV2 as u32);
     header.set_map_location(end as u32);
 
+    msg!("Writing {} bytes", new_rule_set_data_len);
+
     // Copies the 'RuleSet' data
     if end <= account_data.len() {
         match ctx.accounts.buffer_pda_info {
             Some(account_info) => sol_memcpy(
                 &mut account_data[start..end],
                 &(*account_info.data).borrow(),
-                serialized_rule_set.len(),
+                new_rule_set_data_len,
             ),
             None => sol_memcpy(
                 &mut account_data[start..end],
                 &serialized_rule_set,
-                serialized_rule_set.len(),
+                new_rule_set_data_len,
             ),
         }
     } else {
@@ -505,8 +506,6 @@ fn validate_v1(program_id: &Pubkey, ctx: Context<Validate>, args: ValidateArgs) 
         .try_borrow()
         .map_err(|_| ProgramError::AccountBorrowFailed)?;
 
-    msg!("------ BEFORE");
-    sol_log_compute_units();
     // Check `RuleSet` lib version.
     let rule_set = match data.get(start) {
         Some(&RULE_SET_LIB_VERSION) => {
@@ -526,8 +525,6 @@ fn validate_v1(program_id: &Pubkey, ctx: Context<Validate>, args: ValidateArgs) 
         Some(_) => return Err(RuleSetError::UnsupportedRuleSetVersion.into()),
         None => return Err(RuleSetError::DataTypeMismatch.into()),
     };
-    sol_log_compute_units();
-    msg!("------ AFTER");
 
     // Check `RuleSet` account info derivation.
     let _bump = assert_derivation(

@@ -67,7 +67,7 @@ impl<'a> RuleV2<'a> {
 
 impl<'a> Display for RuleV2<'a> {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        formatter.write_fmt(format_args!("Rule: {}", self.data))
+        formatter.write_fmt(format_args!("{}", self.data))
     }
 }
 
