@@ -1,9 +1,9 @@
-use std::fmt::Display;
-
 use bytemuck::{Pod, Zeroable};
+use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
+use std::{collections::HashMap, fmt::Display};
 
 use super::{All, Amount, Any, AssertType, Assertable, ProgramOwnedList};
-use crate::error::RuleSetError;
+use crate::{error::RuleSetError, payload::Payload, state::RuleResult};
 
 // Size of the header section.
 pub const HEADER_SECTION: usize = 8;
@@ -36,15 +36,38 @@ impl<'a> RuleV2<'a> {
     }
 }
 
-impl<'a> Assertable<'_> for RuleV2<'a> {
-    fn assert_type(&self) -> AssertType {
-        self.header.assert_type()
+impl<'a> RuleV2<'a> {
+    pub fn length(&self) -> usize {
+        HEADER_SECTION + self.header.length()
+    }
+
+    pub fn validate(
+        &self,
+        accounts: &HashMap<Pubkey, &AccountInfo>,
+        payload: &Payload,
+        update_rule_state: bool,
+        rule_set_state_pda: &Option<&AccountInfo>,
+        rule_authority: &Option<&AccountInfo>,
+    ) -> ProgramResult {
+        let result = self.data.validate(
+            accounts,
+            payload,
+            update_rule_state,
+            rule_set_state_pda,
+            rule_authority,
+        );
+
+        match result {
+            RuleResult::Success(_) => Ok(()),
+            RuleResult::Failure(err) => Err(err),
+            RuleResult::Error(err) => Err(err),
+        }
     }
 }
 
 impl<'a> Display for RuleV2<'a> {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        formatter.write_fmt(format_args!("{}", self.data))
+        formatter.write_fmt(format_args!("Rule: {}", self.data))
     }
 }
 

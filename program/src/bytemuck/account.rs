@@ -1,10 +1,12 @@
-//! RuleSet PDA data layout
+//! RuleSetV2 PDA data layout
 //! ```text
 //! | Header  | RuleSet version | RuleSet Revision 0 | ... | RuleSetRevisionMap |
 //! |---------|-----------------|--------------------|-----|--------------------|
 //! | 8 bytes | variable bytes  | variable bytes     | ... | variable bytes     |
 
 use bytemuck::{Pod, Zeroable};
+
+use super::SIZE_U64;
 
 /// Account hedaer size in bytes.
 pub const ACCOUNT_HEADER_LENGTH: usize = 8;
@@ -18,10 +20,10 @@ pub const MINIMUM_REVISION_MAP_LENGTH: usize = 16;
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
 pub struct AccountHeader {
-    /// 0. The `Key` for this account which identifies it as a `RuleSet` account.
-    ///
-    /// 1. The location of revision map version stored in the PDA.  This is one byte before the
-    /// revision map itself.
+    /// Stored as an array of u32:
+    ///   0. The `Key` for this account which identifies it as a `RuleSet` account.
+    ///   1. The location of revision map version stored in the PDA.  This is one byte before the
+    ///      revision map itself.
     pub data: [u32; 2],
 }
 
@@ -51,7 +53,7 @@ pub struct AccountRevisionMap<'a> {
 
 impl<'a> AccountRevisionMap<'a> {
     pub fn from_bytes_mut(bytes: &'a mut [u8]) -> Self {
-        let (size, revisions) = bytes.split_at_mut(std::mem::size_of::<u64>());
+        let (size, revisions) = bytes.split_at_mut(SIZE_U64);
         let size = bytemuck::from_bytes_mut::<u64>(size);
 
         let offset = (*size + 1) as usize * std::mem::size_of::<Revision>();
@@ -64,10 +66,10 @@ impl<'a> AccountRevisionMap<'a> {
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
 pub struct Revision {
-    /// 0. The `Key` for this account which identifies it as a `RuleSet` account.
-    ///
-    /// 1. The location of revision map version stored in the PDA.  This is one byte before the
-    /// revision map itself.
+    // Stored as an u32 array:
+    ///   0. The `Key` for this account which identifies it as a `RuleSet` account.
+    ///   1. The location of revision map version stored in the PDA.  This is one byte before the
+    ///      revision map itself.
     pub data: [u32; 2],
 }
 

@@ -72,9 +72,7 @@ fn get_composed_rules_v2() -> ComposedRulesV2 {
     .unwrap();
 
     // Generate some random programs to add to the base lists.
-    let random_programs = (0..200)
-        .map(|_| Keypair::new().pubkey())
-        .collect::<Vec<_>>();
+    let random_programs = (0..30).map(|_| Keypair::new().pubkey()).collect::<Vec<_>>();
 
     let multi_field_program_allow_list = ProgramOwnedList::serialize(
         format!(

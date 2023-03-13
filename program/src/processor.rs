@@ -98,6 +98,9 @@ fn create_or_update_v1(
         return Err(RuleSetError::PayerIsNotSigner.into());
     }
 
+    msg!("About to deserialize the rule set");
+    sol_log_compute_units();
+
     // Deserialize `RuleSet`.
     let rule_set = match ctx.accounts.buffer_pda_info {
         Some(account_info) => rmp_serde::from_slice::<RuleSetV1>(&(*account_info.data).borrow())
@@ -105,6 +108,9 @@ fn create_or_update_v1(
         None => rmp_serde::from_slice(&serialized_rule_set)
             .map_err(|_| RuleSetError::MessagePackDeserializationError)?,
     };
+
+    sol_log_compute_units();
+    msg!("Finished deserializing rule set");
 
     if rule_set.name().len() > MAX_NAME_LENGTH {
         return Err(RuleSetError::NameTooLong.into());
@@ -256,20 +262,32 @@ fn create_or_update_v2(
         return Err(RuleSetError::PayerIsNotSigner.into());
     }
 
+    msg!("About to deserialize the rule set");
+    sol_log_compute_units();
+
     // bytemuck Deserialize `RuleSet`.
     let (rule_set_version, rule_set_name) = match ctx.accounts.buffer_pda_info {
         Some(account_info) => {
             let data = &(*account_info.data).borrow();
             let rule_set = RuleSetV2::from_bytes(data)
                 .map_err(|_| RuleSetError::MessagePackDeserializationError)?;
-            (*rule_set.lib_version, rule_set.rule_set_name.to_string())
+            (
+                rule_set.data.lib_version(),
+                rule_set.rule_set_name.to_string(),
+            )
         }
         None => {
             let rule_set = RuleSetV2::from_bytes(&serialized_rule_set)
                 .map_err(|_| RuleSetError::MessagePackDeserializationError)?;
-            (*rule_set.lib_version, rule_set.rule_set_name.to_string())
+            (
+                rule_set.data.lib_version(),
+                rule_set.rule_set_name.to_string(),
+            )
         }
     };
+
+    sol_log_compute_units();
+    msg!("Finished deserializing rule set");
 
     let rule_set_name = rule_set_name.trim_end_matches('\0').to_string();
 
@@ -280,7 +298,7 @@ fn create_or_update_v2(
     */
 
     // Make sure we know how to work with this RuleSet.
-    if rule_set_version != crate::bytemuck::RULE_SET_LIB_VERSION as u64 {
+    if rule_set_version != crate::bytemuck::RULE_SET_LIB_VERSION as u32 {
         return Err(RuleSetError::UnsupportedRuleSetVersion.into());
     }
     /* TODO: create a helper function to validate the rule set
@@ -357,8 +375,6 @@ fn create_or_update_v2(
         }
     }
 
-    msg!("Writing {} bytes", new_rule_set_data_len);
-
     // Determine the offset for the 'RuleSet'
     let start = ACCOUNT_HEADER_LENGTH;
     let end = start
@@ -366,6 +382,8 @@ fn create_or_update_v2(
         .ok_or(RuleSetError::NumericalOverflow)?;
 
     let account_data = &mut (*ctx.accounts.rule_set_pda_info.data).borrow_mut();
+    msg!("Writing {} bytes", account_data.len());
+
     let header =
         bytemuck::from_bytes_mut::<AccountHeader>(&mut account_data[..ACCOUNT_HEADER_LENGTH]);
 

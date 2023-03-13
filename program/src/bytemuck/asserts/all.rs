@@ -1,10 +1,10 @@
+use borsh::BorshSerialize;
 use std::fmt::Display;
 
-use borsh::BorshSerialize;
-
-use crate::{bytemuck::HEADER_SECTION, error::RuleSetError};
-
-use super::{AssertType, Assertable, RuleV2};
+use crate::{
+    bytemuck::{AssertType, Assertable, RuleV2, HEADER_SECTION, SIZE_U64},
+    error::RuleSetError,
+};
 
 pub struct All<'a> {
     pub size: &'a u64,
@@ -13,7 +13,7 @@ pub struct All<'a> {
 
 impl<'a> All<'a> {
     pub fn from_bytes(bytes: &'a [u8]) -> Result<Self, RuleSetError> {
-        let (size, data) = bytes.split_at(std::mem::size_of::<u64>());
+        let (size, data) = bytes.split_at(SIZE_U64);
         let size = bytemuck::from_bytes::<u64>(size);
 
         let mut rules = Vec::with_capacity(*size as usize);
@@ -21,7 +21,7 @@ impl<'a> All<'a> {
 
         for _ in 0..*size {
             let rule = RuleV2::from_bytes(&data[offset..])?;
-            offset += HEADER_SECTION + rule.header.length();
+            offset += rule.length();
             rules.push(rule);
         }
 
@@ -29,26 +29,29 @@ impl<'a> All<'a> {
     }
 
     pub fn serialize(rules: &[&[u8]]) -> std::io::Result<Vec<u8>> {
-        let mut data = Vec::new();
+        // length of the assert
+        let length = (SIZE_U64
+            + rules
+                .iter()
+                .map(|v| v.len())
+                .reduce(|accum, item| accum + item)
+                .ok_or(RuleSetError::DataIsEmpty)
+                .unwrap()) as u32;
 
-        // (Header) rule type
+        let mut data = Vec::with_capacity(HEADER_SECTION + length as usize);
+
+        // Header
+        // - rule type
         let rule_type = AssertType::All as u32;
         BorshSerialize::serialize(&rule_type, &mut data)?;
-
-        // (Header) length
-        let length = 8 + rules
-            .iter()
-            .map(|v| v.len())
-            .reduce(|accum, item| accum + item)
-            .ok_or(RuleSetError::DataIsEmpty)
-            .unwrap() as u32;
+        // - length
         BorshSerialize::serialize(&length, &mut data)?;
 
-        // size
+        // Assert
+        // - size
         let size = rules.len() as u64;
         BorshSerialize::serialize(&size, &mut data)?;
-
-        // rules
+        // - rules
         rules.iter().for_each(|x| data.extend(x.iter()));
 
         Ok(data)
@@ -63,14 +66,15 @@ impl<'a> Assertable<'a> for All<'a> {
 
 impl<'a> Display for All<'a> {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        formatter.write_str("All {\n")?;
-        formatter.write_str("    rules: [\n")?;
+        formatter.write_str("All {rules: [")?;
 
-        for p in &self.rules {
-            formatter.write_str(&format!("    {}\n", p))?;
+        for i in 0..*self.size {
+            if i > 0 {
+                formatter.write_str(", ")?;
+            }
+            formatter.write_str(&format!("{}", self.rules[i as usize]))?;
         }
 
-        formatter.write_str("    ]\n")?;
-        formatter.write_str("}")
+        formatter.write_str("]}")
     }
 }

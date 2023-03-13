@@ -1,55 +1,30 @@
 mod account;
-mod all;
-mod amount;
-mod any;
-mod program_owned_list;
+mod asserts;
 mod rule;
 mod rule_set;
 
 use std::{collections::HashMap, fmt::Display};
 
 pub use account::*;
-pub use all::*;
-pub use amount::*;
-pub use any::*;
-pub use program_owned_list::*;
+
+pub use asserts::*;
 pub use rule::*;
 pub use rule_set::*;
-use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
-    pubkey::Pubkey,
-};
+use solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
 
 use crate::{error::RuleSetError, payload::Payload, state::RuleResult};
 
-// max size 16 bytes
+// Maximum size for String fields.
 pub const FIELD_LENGTH: usize = 32;
+
+// Size of a u64 value.
+pub const SIZE_U64: usize = std::mem::size_of::<u64>();
+
+// Size of a Pubkey value.
+pub const SIZE_PUBKEY: usize = 32;
 
 pub trait Assertable<'a>: Display {
     fn validate(
-        &self,
-        accounts: &HashMap<Pubkey, &AccountInfo>,
-        payload: &Payload,
-        update_rule_state: bool,
-        rule_set_state_pda: &Option<&AccountInfo>,
-        rule_authority: &Option<&AccountInfo>,
-    ) -> ProgramResult {
-        let result = self.inner_validate(
-            accounts,
-            payload,
-            update_rule_state,
-            rule_set_state_pda,
-            rule_authority,
-        );
-
-        match result {
-            RuleResult::Success(_) => Ok(()),
-            RuleResult::Failure(err) => Err(err),
-            RuleResult::Error(err) => Err(err),
-        }
-    }
-
-    fn inner_validate(
         &self,
         _accounts: &HashMap<Pubkey, &AccountInfo>,
         _payload: &Payload,
