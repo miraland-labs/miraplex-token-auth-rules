@@ -30,9 +30,14 @@ const RULE_SET_NAME: &str = "Metaplex Royalty RuleSet Dev";
 // --------------------------------
 // Define Program Allow List
 // --------------------------------
-const ROOSTER_PROGRAM_ID: Pubkey = pubkey!("Roostrnex2Z9Y2XZC49sFAdZARP8E4iFpEnZC5QJWdz");
-const TOKEN_METADATA_PROGRAM_ID: Pubkey = pubkey!("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
-const TOKEN_AUTH_RULES_ID: Pubkey = pubkey!("auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg");
+// MI: vanilla pubkeys
+// const ROOSTER_PROGRAM_ID: Pubkey = pubkey!("Roostrnex2Z9Y2XZC49sFAdZARP8E4iFpEnZC5QJWdz");
+// const TOKEN_METADATA_PROGRAM_ID: Pubkey = pubkey!("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
+// const TOKEN_AUTH_RULES_ID: Pubkey = pubkey!("auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg");
+const ROOSTER_PROGRAM_ID: Pubkey = pubkey!("roos9SDjRQhy5iq8gVihwBoVvgYcNDxqhj1HdhGpiu5");
+const TOKEN_METADATA_PROGRAM_ID: Pubkey = pubkey!("Meta88XpDHcSJZDFiHop6c9sXaufkZX5depkZyrYBWv");
+const TOKEN_AUTH_RULES_ID: Pubkey = pubkey!("AuthxYNhPnnrGBo1wdzeUdukrsFpHvR42wghx8ZPNEo4");
+
 
 const TRANSFER_PROGRAM_BASE_ALLOW_LIST: [Pubkey; 3] = [
     TOKEN_METADATA_PROGRAM_ID,

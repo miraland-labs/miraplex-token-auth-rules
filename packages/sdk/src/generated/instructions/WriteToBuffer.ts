@@ -63,7 +63,7 @@ export const writeToBufferInstructionDiscriminator = 2;
 export function createWriteToBufferInstruction(
   accounts: WriteToBufferInstructionAccounts,
   args: WriteToBufferInstructionArgs,
-  programId = new web3.PublicKey('auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg'),
+  programId = new web3.PublicKey('AuthxYNhPnnrGBo1wdzeUdukrsFpHvR42wghx8ZPNEo4'),
 ) {
   const [data] = WriteToBufferStruct.serialize({
     instructionDiscriminator: writeToBufferInstructionDiscriminator,
