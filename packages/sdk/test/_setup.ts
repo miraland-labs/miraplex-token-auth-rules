@@ -1,5 +1,5 @@
-import { Connection, Keypair, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
-import { LOCALHOST } from '@metaplex-foundation/amman';
+import { Connection, Keypair, PublicKey, SystemProgram, Transaction } from '@solarti/web3.js';
+import { LOCALHOST } from '@miraplex/amman';
 import {
   createCreateOrUpdateInstruction,
   createWriteToBufferInstruction,
@@ -7,7 +7,7 @@ import {
   findRuleSetBufferPDA,
   PROGRAM_ID,
   createPuffRuleSetInstruction,
-} from '../src/mpl-token-auth-rules';
+} from '../src/miraplex-token-auth-rules';
 import { amman } from './_amman';
 
 const CHUNK_SIZE = 900;

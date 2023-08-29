@@ -6,7 +6,7 @@ import {
   deserializeRuleV2,
   RuleTypeV2,
   serializeRuleV2,
-} from '../../src/mpl-token-auth-rules';
+} from '../../src/miraplex-token-auth-rules';
 import { serializeString32 } from '../../src/ruleSetV2/helpers';
 
 test('serialize', async (t) => {

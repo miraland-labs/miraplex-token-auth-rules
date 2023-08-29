@@ -1,11 +1,11 @@
-import { Keypair, PublicKey } from '@solana/web3.js';
+import { Keypair, PublicKey } from '@solarti/web3.js';
 import test from 'ava';
 import {
   deserializeRuleV2,
   RuleTypeV2,
   serializeRuleV2,
   pubkeyListMatchV2,
-} from '../../src/mpl-token-auth-rules';
+} from '../../src/miraplex-token-auth-rules';
 import { serializeString32 } from '../../src/ruleSetV2/helpers';
 
 test('serialize', async (t) => {

@@ -5,7 +5,7 @@
  * See: https://github.com/metaplex-foundation/solita
  */
 
-import * as beet from '@metaplex-foundation/beet';
+import * as beet from '@miraplex/beet';
 /**
  * This type is used to derive the {@link CreateOrUpdateArgs} type as well as the de/serializer.
  * However don't refer to it in your code but use the {@link CreateOrUpdateArgs} type instead.

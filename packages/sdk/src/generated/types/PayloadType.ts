@@ -5,9 +5,9 @@
  * See: https://github.com/metaplex-foundation/solita
  */
 
-import * as web3 from '@solana/web3.js';
-import * as beet from '@metaplex-foundation/beet';
-import * as beetSolana from '@metaplex-foundation/beet-solana';
+import * as web3 from '@solarti/web3.js';
+import * as beet from '@miraplex/beet';
+import * as beetMiraland from '@miraplex/beet-miraland';
 import { SeedsVec, seedsVecBeet } from './SeedsVec';
 import { ProofInfo, proofInfoBeet } from './ProofInfo';
 /**
@@ -57,7 +57,7 @@ export const payloadTypeBeet = beet.dataEnum<PayloadTypeRecord>([
   [
     'Pubkey',
     new beet.BeetArgsStruct<PayloadTypeRecord['Pubkey']>(
-      [['fields', beet.fixedSizeTuple([beetSolana.publicKey])]],
+      [['fields', beet.fixedSizeTuple([beetMiraland.publicKey])]],
       'PayloadTypeRecord["Pubkey"]',
     ),
   ],

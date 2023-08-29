@@ -9,21 +9,21 @@
   "license": "Apache-2.0",
   "scripts": {
     "build:rust": "(cd program; cargo build-bpf)",
-    "build:sdk": "yarn workspace @metaplex-foundation/mpl-token-auth-rules build",
-    "build:docs": "yarn workspace @metaplex-foundation/mpl-token-auth-rules build:docs",
+    "build:sdk": "yarn workspace @miraplex/miraplex-token-auth-rules build",
+    "build:docs": "yarn workspace @miraplex/miraplex-token-auth-rules build:docs",
     "build": "yarn build:rust && yarn solita && yarn fix:format && yarn build:sdk && yarn build:docs",
     "update-sol-deps": "./scripts/update-solana-dependencies.sh",
     "amman": "./scripts/amman.sh",
-    "fix:format": "(cd program; cargo fmt) && yarn workspace @metaplex-foundation/mpl-token-auth-rules fix:prettier",
-    "lint": "(cd program; cargo clippy) && yarn workspace @metaplex-foundation/mpl-token-auth-rules lint"
+    "fix:format": "(cd program; cargo fmt) && yarn workspace @miraplex/miraplex-token-auth-rules fix:prettier",
+    "lint": "(cd program; cargo clippy) && yarn workspace @miraplex/miraplex-token-auth-rules lint"
   },
   "workspaces": [
     "packages/*",
     "cli"
   ],
   "devDependencies": {
-    "@metaplex-foundation/amman": "^0.12.1",
-    "@metaplex-foundation/solita": "^0.19.3",
+    "@miraplex/amman": "^0.12.2",
+    "@miraplex/solita": "^0.19.4",
     "@typescript-eslint/eslint-plugin": "^5.43.0",
     "@typescript-eslint/parser": "^5.43.0",
     "esbuild-runner": "^2.2.2",

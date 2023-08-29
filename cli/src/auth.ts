@@ -1,6 +1,6 @@
 import { encode, decode } from '@msgpack/msgpack';
 import { createTokenAuthorizationRules, validateOperation } from './helpers/mpl-token-auth-rules';
-import { Keypair, Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { Keypair, Connection, LAMPORTS_PER_SOL, PublicKey } from '@solarti/web3.js';
 import { Command, program } from "commander";
 import log from "loglevel";
 import * as fs from 'fs';

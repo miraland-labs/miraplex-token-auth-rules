@@ -1,11 +1,11 @@
-import { Keypair } from '@solana/web3.js';
+import { Keypair } from '@solarti/web3.js';
 import test from 'ava';
 import {
   additionalSignerV2,
   deserializeRuleSetV2,
   RuleSetV2,
   serializeRuleSetV2,
-} from '../../src/mpl-token-auth-rules';
+} from '../../src/miraplex-token-auth-rules';
 import { serializeString32 } from '../../src/ruleSetV2/helpers';
 
 test('serialize', async (t) => {

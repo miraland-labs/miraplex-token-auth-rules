@@ -9,7 +9,7 @@ This package contains the Metaplex Token Authorization Rules JavaScript SDK.
 ## Installation
 
 ```shell
-npm install @metaplex-foundation/mpl-token-auth-rules --save
+npm install @miraplex/miraplex-token-auth-rules --save
 ```
 
 ## Developing

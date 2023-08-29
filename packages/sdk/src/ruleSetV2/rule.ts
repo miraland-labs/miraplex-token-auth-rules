@@ -1,4 +1,4 @@
-import * as beet from '@metaplex-foundation/beet';
+import * as beet from '@miraplex/beet';
 import BN from 'bn.js';
 import {
   AdditionalSignerRuleV2,

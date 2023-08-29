@@ -1,4 +1,4 @@
-import * as beet from '@metaplex-foundation/beet';
+import * as beet from '@miraplex/beet';
 import { deserializeRulesV2, RuleV2, serializeRuleHeaderV2, serializeRulesV2 } from './rule';
 import { RuleTypeV2 } from './ruleType';
 

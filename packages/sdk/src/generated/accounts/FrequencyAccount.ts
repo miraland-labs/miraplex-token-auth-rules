@@ -5,9 +5,9 @@
  * See: https://github.com/metaplex-foundation/solita
  */
 
-import * as beet from '@metaplex-foundation/beet';
-import * as web3 from '@solana/web3.js';
-import * as beetSolana from '@metaplex-foundation/beet-solana';
+import * as beet from '@miraplex/beet';
+import * as web3 from '@solarti/web3.js';
+import * as beetMiraland from '@miraplex/beet-miraland';
 import { Key, keyBeet } from '../types/Key';
 
 /**
@@ -79,7 +79,7 @@ export class FrequencyAccount implements FrequencyAccountArgs {
   static gpaBuilder(
     programId: web3.PublicKey = new web3.PublicKey('AuthxYNhPnnrGBo1wdzeUdukrsFpHvR42wghx8ZPNEo4'),
   ) {
-    return beetSolana.GpaBuilder.fromStruct(programId, frequencyAccountBeet);
+    return beetMiraland.GpaBuilder.fromStruct(programId, frequencyAccountBeet);
   }
 
   /**

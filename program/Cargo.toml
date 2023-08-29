@@ -1,6 +1,6 @@
 [package]
 name = "miraplex-token-auth-rules"
-version = "1.3.2"
+version = "1.3.3"
 description = "MPL Token Authorization Rules that can be used to restrict common token operations"
 authors = ["Metaplex Developers <dev@metaplex.com>"]
 repository = "https://github.com/miraland-labs/miraplex-token-auth-rules.git"
@@ -10,7 +10,7 @@ readme = "../README.md"
 keywords = ["nft", "miraplex", "miraland", "solarti", "blockchain"]
 
 [dependencies]
-miraland-program = "=1.14.17-rc5"
+miraland-program = "=1.14.17-rc6"
 shank = "0.0.11"
 borsh = "0.9.3"
 thiserror = "1.0"
@@ -20,7 +20,7 @@ serde = { version = "1.0.149", features = ["derive"]}
 serde_with = { version = "1.14.0", optional = true }
 rmp-serde = "1.1.1"
 miraplex-token-metadata-context-derive = "0.2.1"
-miraland-zk-token-sdk = "=1.14.17-rc5"
+miraland-zk-token-sdk = "=1.14.17-rc6"
 bytemuck = "1.13.1"
 
 [features]
@@ -30,9 +30,9 @@ serde-with-feature = ["serde_with"]
 
 [dev-dependencies]
 assert_matches = "1.5.0"
-miraland-program-test = "=1.14.17-rc5"
-miraland-sdk = "=1.14.17-rc5"
-miraland-logger = "=1.14.17-rc5"
+miraland-program-test = "=1.14.17-rc6"
+miraland-sdk = "=1.14.17-rc6"
+miraland-logger = "=1.14.17-rc6"
 solarti-token = { version = "3.5", features = [ "no-entrypoint" ] }
 serde_json = "1.0.87"
 solarti-associated-token-account = { version = "1.1", features = ["no-entrypoint"] }

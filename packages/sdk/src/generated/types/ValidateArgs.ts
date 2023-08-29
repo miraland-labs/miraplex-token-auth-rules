@@ -5,7 +5,7 @@
  * See: https://github.com/metaplex-foundation/solita
  */
 
-import * as beet from '@metaplex-foundation/beet';
+import * as beet from '@miraplex/beet';
 import { Payload, payloadBeet } from './Payload';
 /**
  * This type is used to derive the {@link ValidateArgs} type as well as the de/serializer.

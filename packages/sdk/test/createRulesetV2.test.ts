@@ -1,4 +1,4 @@
-import { Keypair } from '@solana/web3.js';
+import { Keypair } from '@solarti/web3.js';
 import { encode } from '@msgpack/msgpack';
 import test from 'ava';
 import {
@@ -20,7 +20,7 @@ import {
   pubkeyTreeMatchV2,
   RuleSetV2,
   serializeRuleSetV2,
-} from '../src/mpl-token-auth-rules';
+} from '../src/miraplex-token-auth-rules';
 import {
   createOrUpdateLargeRuleset,
   createOrUpdateRuleset,

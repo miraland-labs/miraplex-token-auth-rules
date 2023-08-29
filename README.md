@@ -227,7 +227,7 @@ fn main() {
 ```js
 import { encode, decode } from '@msgpack/msgpack';
 import { createCreateInstruction, createTokenAuthorizationRules, PREFIX, PROGRAM_ID } from './helpers/mpl-token-auth-rules';
-import { Keypair, Connection, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
+import { Keypair, Connection, PublicKey, Transaction, SystemProgram } from '@solarti/web3.js';
 
 export const findRuleSetPDA = async (payer: PublicKey, name: string) => {
     return await PublicKey.findProgramAddress(

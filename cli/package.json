@@ -17,8 +17,8 @@
     "dependencies": {
         "@metaplex-foundation/js": "^0.15.0",
         "@msgpack/msgpack": "^2.8.0",
-        "@solana/spl-token": "^0.3.4",
-        "@solana/web3.js": "^1.56.2",
+        "@solarti/solarti-token": "^0.3.7-rc0",
+        "@solarti/web3.js": "^1.73.2-rc4",
         "@types/node": "^18.7.14",
         "chalk": "4.1.2",
         "clear": "^0.1.0",

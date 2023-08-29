@@ -1,6 +1,6 @@
-import * as beet from '@metaplex-foundation/beet';
-import * as beetSolana from '@metaplex-foundation/beet-solana';
-import { PublicKey } from '@solana/web3.js';
+import * as beet from '@miraplex/beet';
+import * as beetMiraland from '@miraplex/beet-miraland';
+import { PublicKey } from '@solarti/web3.js';
 import { deserializeRulesV2, RuleV2, serializeRulesV2 } from './rule';
 
 export type RuleSetV2 = {
@@ -23,7 +23,7 @@ export const serializeRuleSetV2 = (ruleSet: RuleSetV2): Buffer => {
 
   // Owner.
   const ownerBuffer = Buffer.alloc(32);
-  beetSolana.publicKey.write(ownerBuffer, 0, ruleSet.owner);
+  beetMiraland.publicKey.write(ownerBuffer, 0, ruleSet.owner);
 
   // Name.
   const nameBuffer = Buffer.alloc(32);
@@ -56,7 +56,7 @@ export const deserializeRuleSetV2 = (buffer: Buffer, offset = 0): RuleSetV2 => {
   offset += 4;
 
   // Owner.
-  const owner = beetSolana.publicKey.read(buffer, offset);
+  const owner = beetMiraland.publicKey.read(buffer, offset);
   offset += 32;
 
   // Name.

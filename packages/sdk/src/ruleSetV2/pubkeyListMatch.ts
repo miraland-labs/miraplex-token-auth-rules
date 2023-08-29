@@ -1,5 +1,5 @@
-import * as beet from '@metaplex-foundation/beet';
-import { PublicKey } from '@solana/web3.js';
+import * as beet from '@miraplex/beet';
+import { PublicKey } from '@solarti/web3.js';
 import {
   deserializePublicKey,
   deserializeString32,

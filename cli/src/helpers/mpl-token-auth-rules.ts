@@ -5,10 +5,10 @@ import {
     SystemProgram,
     SYSVAR_INSTRUCTIONS_PUBKEY,
     Transaction,
-} from "@solana/web3.js";
+} from "@solarti/web3.js";
 import { createCreateOrUpdateInstruction, createValidateInstruction, Payload, PROGRAM_ID } from "../../../packages/sdk/src/mpl-token-auth-rules";
 import { findRuleSetPDA } from "./pda";
-import { TokenMetadataProgram } from "@metaplex-foundation/js";
+import { TokenMetadataProgram } from "@miraplex/js";
 
 export const createTokenAuthorizationRules = async (
     connection: Connection,

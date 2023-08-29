@@ -1,4 +1,4 @@
-import * as beet from '@metaplex-foundation/beet';
+import * as beet from '@miraplex/beet';
 import BN from 'bn.js';
 import { deserializeString32, serializeString32 } from './helpers';
 import { serializeRuleHeaderV2 } from './rule';

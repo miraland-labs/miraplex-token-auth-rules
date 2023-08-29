@@ -4,7 +4,7 @@ const path = require('path');
 const accountProviders = require('./packages/sdk/dist/src/generated/accounts');
 
 const localDeployDir = path.join(__dirname, 'program', 'target', 'deploy');
-const { LOCALHOST, tmpLedgerDir } = require('@metaplex-foundation/amman');
+const { LOCALHOST, tmpLedgerDir } = require('@miraplex/amman');
 const MY_PROGRAM_ID = require("./packages/sdk/idl/mpl_token_auth_rules.json").metadata.address;
 
 function localDeployPath(programName) {

@@ -4,7 +4,7 @@ import {
   passV2,
   RuleTypeV2,
   serializeRuleV2,
-} from '../../src/mpl-token-auth-rules';
+} from '../../src/miraplex-token-auth-rules';
 
 test('serialize', async (t) => {
   const rule = passV2();
