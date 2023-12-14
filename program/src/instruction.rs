@@ -121,8 +121,7 @@ impl InstructionBuilder for builders::CreateOrUpdate {
         Instruction {
             program_id: crate::ID,
             accounts,
-            data: RuleSetInstruction::CreateOrUpdate(self.args.clone())
-                .try_to_vec()
+            data: borsh::to_vec(&RuleSetInstruction::CreateOrUpdate(self.args.clone()))
                 .unwrap(),
         }
     }
@@ -163,8 +162,7 @@ impl InstructionBuilder for builders::Validate {
         Instruction {
             program_id: crate::ID,
             accounts,
-            data: RuleSetInstruction::Validate(self.args.clone())
-                .try_to_vec()
+            data: borsh::to_vec(&RuleSetInstruction::Validate(self.args.clone()))
                 .unwrap(),
         }
     }
@@ -182,8 +180,7 @@ impl InstructionBuilder for builders::WriteToBuffer {
         Instruction {
             program_id: crate::ID,
             accounts,
-            data: RuleSetInstruction::WriteToBuffer(self.args.clone())
-                .try_to_vec()
+            data: borsh::to_vec(&RuleSetInstruction::WriteToBuffer(self.args.clone()))
                 .unwrap(),
         }
     }
@@ -201,8 +198,7 @@ impl InstructionBuilder for builders::PuffRuleSet {
         Instruction {
             program_id: crate::ID,
             accounts,
-            data: RuleSetInstruction::PuffRuleSet(self.args.clone())
-                .try_to_vec()
+            data: borsh::to_vec(&RuleSetInstruction::PuffRuleSet(self.args.clone()))
                 .unwrap(),
         }
     }
